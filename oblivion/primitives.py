@@ -13,23 +13,22 @@ from oblivion.constants import (
 def octet_string_to_integer_primitive(octet_string: bytes) -> Tuple[int, int]:
     """Convert an octet string to a nonnegative integer."""
     # https://tools.ietf.org/html/rfc8017#section-4.2
-    nonnegative_integer = \
+    integer = \
         sum(value * (256 ** index)
             for index, value in enumerate(reversed(octet_string)))
-    return len(octet_string), nonnegative_integer
+    return len(octet_string), integer
 
 
-def integer_to_octet_string_primitive(length: int,
-                                      nonnegative_integer: int) -> bytes:
+def integer_to_octet_string_primitive(length: int, integer: int) -> bytes:
     """Convert a nonnegative integer to an octet string."""
     # https://tools.ietf.org/html/rfc8017#section-4.1
-    if nonnegative_integer >= 256 ** length:
-        raise ValueError(f"{nonnegative_integer} >= 256 ** {length}")
+    if integer >= 256 ** length:
+        raise ValueError(f"{integer} >= 256 ** {length}")
     index = 0
     digits = [0] * length
-    while nonnegative_integer:
-        digits[index] = nonnegative_integer % 256
-        nonnegative_integer //= 256
+    while integer:
+        digits[index] = integer % 256
+        integer //= 256
         index += 1
     return bytes(reversed(digits))
 
