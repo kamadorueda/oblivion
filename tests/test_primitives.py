@@ -3,6 +3,10 @@ import pytest
 
 # Local imports
 from oblivion import primitives
+from oblivion.constants import (
+    RSAPublicKey,
+    RSAPrivateKey,
+)
 
 
 @pytest.mark.parametrize(
@@ -23,19 +27,11 @@ def test_integer_to_octet_string_primitive(args, result):
     assert primitives.integer_to_octet_string_primitive(*args) == result
 
 
-@pytest.mark.parametrize(
-    "args,result", [
-        (((3233, 17), 48), 624),
-    ])
-def test_rsa_encryption_primitive(args, result):
-    """Test primitives.rsa_encryption_primitive."""
-    assert primitives.rsa_encryption_primitive(*args) == result
-
-
-@pytest.mark.parametrize(
-    "args,result", [
-        (((3233, 413), 624), 48),
-    ])
-def test_rsa_decryption_primitive(args, result):
-    """Test primitives.rsa_decryption_primitive."""
-    assert primitives.rsa_decryption_primitive(*args) == result
+def test_rsa_encryption_and_decryption_primitive(
+        rsa_public_key: RSAPublicKey,
+        rsa_private_key: RSAPrivateKey):
+    """Test primitives.rsa_*_primitive."""
+    message = 123456789
+    ciphertext = primitives.rsa_encryption_primitive(rsa_public_key, message)
+    message2 = primitives.rsa_decryption_primitive(rsa_private_key, ciphertext)
+    assert message == message2

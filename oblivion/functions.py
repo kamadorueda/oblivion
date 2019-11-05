@@ -1,10 +1,9 @@
 # Standard imports
 import os
-import hashlib
 
 # Local imports
 from oblivion.constants import (
-    HASH_BASE,
+    HashBase,
     HASH_LENGTH,
 )
 from oblivion.primitives import (
@@ -14,12 +13,19 @@ from oblivion.primitives import (
 
 def hash_func(msg: bytes) -> bytes:
     """Return the digest of msg."""
-    return HASH_BASE(msg).digest()
+    return HashBase(msg).digest()
 
 
 def random_bytes(size: int) -> bytes:
     """Return a safe random octet string."""
     return os.urandom(size)
+
+
+def bytes_xor(bytes_a: bytes, bytes_b: bytes) -> bytes:
+    """Return the XOR between A and B."""
+    if len(bytes_a) != len(bytes_b):
+        raise ValueError('Expected equal length octet strings')
+    return bytes(a ^ b for a, b in zip(bytes_a, bytes_b))
 
 
 def mask_generation_function(mgf_seed: bytes, mask_length: int) -> bytes:

@@ -34,7 +34,7 @@ def integer_to_octet_string_primitive(length: int, integer: int) -> bytes:
 
 
 def rsa_encryption_primitive(public_key: RSAPublicKey,
-                             message: RSAMsgRepresentative
+                             message: RSAMsgRepresentative,
                              ) -> RSACyphertextRepresentative:
     # https://tools.ietf.org/html/rfc8017#section-5.1.1
     key_modulus, public_key_exponent = public_key
@@ -44,7 +44,7 @@ def rsa_encryption_primitive(public_key: RSAPublicKey,
 
 
 def rsa_decryption_primitive(private_key: RSAPrivateKey,
-                             ciphertext: RSACyphertextRepresentative
+                             ciphertext: RSACyphertextRepresentative,
                              ) -> RSACyphertextRepresentative:
     # https://tools.ietf.org/html/rfc8017#section-5.1.2
     key_modulus, private_key_exponent = private_key
