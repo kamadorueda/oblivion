@@ -1,6 +1,8 @@
 # Standard imports
 import hashlib
-from typing import Tuple
+import textwrap
+from typing import Any, Tuple
+from inspect import getouterframes, currentframe
 
 # Types
 RSAModulus = int
@@ -17,6 +19,18 @@ RSACyphertextRepresentative = int
 # Crypto constants
 HashBase = hashlib.sha3_512
 HASH_LENGTH = HashBase().digest_size
+
+
+def callback(msg: str) -> Any:
+    """Callback function to notify progress."""
+    return msg
+
+
+def suggested_callback(msg):
+    """Suggested callback function."""
+    current_depth: int = len(getouterframes(currentframe()))
+    print(textwrap.indent(msg, prefix='-' * current_depth))
+
 
 #
 # Exceptions

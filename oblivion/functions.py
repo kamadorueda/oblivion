@@ -9,7 +9,9 @@ from oblivion.constants import (
     HASH_LENGTH,
 
     RSAPublicKey,
-    RSAPrivateKey
+    RSAPrivateKey,
+
+    callback,
 )
 from oblivion.primitives import (
     integer_to_octet_string_primitive,
@@ -53,7 +55,7 @@ def jacobi(numerator: int, denominator: int) -> int:
     return 0
 
 
-def is_prime(number, rounds: int = 32) -> bool:
+def is_prime(number, rounds: int = 16) -> bool:
     """Primality test via Solovay-Strassen algorithm."""
     helper: int = (number - 1) // 2
     for _ in range(rounds):
@@ -67,16 +69,35 @@ def is_prime(number, rounds: int = 32) -> bool:
 
 def generate_prime(bits: int) -> int:
     """Return a prime number of the specified bits."""
+    callback('generating prime')
     while True:
-        prime = secrets.randbits(bits)
+        prime = secrets.randbits(bits + 1)
+        prime += (1 - prime & 1)
         if (prime).bit_length() < bits:
             continue
-        prime += (1 - prime & 1)
         if is_prime(prime):
             return prime
 
 
-def extended_euclid_gcd(left: int, right: int) -> Tuple[int, int, int]:
+def generate_special_prime(bits: int, depth: int = 4) -> int:
+    """Return a prime 'p' where 'p-1' has large prime factors."""
+    callback('generating base prime')
+
+    counter: int = 0
+    if depth > 1:
+        base_prime = generate_special_prime(bits, depth=depth - 1)
+    else:
+        base_prime = generate_prime(bits)
+
+    callback('incrementing base prime')
+    while True:
+        counter += 2
+        prime = counter * base_prime + 1
+        if is_prime(prime):
+            return prime
+
+
+def extended_euclidian_gcd(left: int, right: int) -> Tuple[int, int, int]:
     """Solve left * x + right * y = gcd(left, right) and return r, x, y."""
     new_x, new_y, new_r = 0, 1, right
     old_x, old_y, old_r = 1, 0, left
@@ -88,31 +109,45 @@ def extended_euclid_gcd(left: int, right: int) -> Tuple[int, int, int]:
     return old_r, old_x, old_y
 
 
-def modulo_multiplicative_inverse(number: int, modulo: int) -> int:
-    """Compute the multiplicative inverse of number under modulo M."""
+def modular_multiplicative_inverse(number: int, modulo: int) -> int:
+    """Compute the multiplicative inverse of number under given modulo."""
     # Assumes number and modulo are co-prime
-    return extended_euclid_gcd(number, modulo)[1] % modulo
+    return extended_euclidian_gcd(number, modulo)[1] % modulo
 
 
-def get_new_keys(bits: int) -> Tuple[RSAPublicKey, RSAPrivateKey]:
+def rsa_generate_keys(bits: int) -> Tuple[RSAPublicKey, RSAPrivateKey]:
     """Generate public and private keys with (n, d) of the specified bits."""
+    reduced_totient_divisor_min_bits: int = bits // 2 ** 4
     while True:
-        prime_p = generate_prime(bits // 2)
-        prime_q = generate_prime(bits // 2)
+        callback('generating prime number: p')
+        prime_p = generate_special_prime(bits // 2 - 1)
+        callback('generating prime number: q')
+        prime_q = generate_special_prime(bits // 2 + 1)
+        callback('computing modulus: n')
         modulus_n = prime_p * prime_q
+        callback('computing health check')
+        reduced_totient_divisor: int = math.gcd(prime_p - 1, prime_q - 1)
         if (modulus_n).bit_length() >= bits:
-            break
-
-    totient_n = \
-        (prime_p - 1) * (prime_q - 1) // math.gcd(prime_p - 1, prime_q - 1)
-
+            if reduced_totient_divisor_min_bits:
+                if (reduced_totient_divisor.bit_length()
+                        < reduced_totient_divisor_min_bits):
+                    break
+            else:
+                break
+        callback('health check failed, retrying')
+    callback('computing reduced_totient of: n')
+    reduced_totient = (prime_p - 1) * (prime_q - 1) // reduced_totient_divisor
     while True:
+        callback('computing exponent: d')
         exponent_d = generate_prime(bits)
-        exponent_e = modulo_multiplicative_inverse(exponent_d, totient_n)
-        if (modulus_n).bit_length() < exponent_e < totient_n \
-                and math.gcd(exponent_e, totient_n) == 1:
+        # It's guaranteed that exponent_d < reduced_totient (FIPS 186-4)
+        callback('computing exponent: e')
+        exponent_e = modular_multiplicative_inverse(exponent_d, reduced_totient)
+        callback('computing health check')
+        if (modulus_n).bit_length() < exponent_e < reduced_totient \
+                and math.gcd(exponent_e, reduced_totient) == 1:
             break
-
+        callback('health check failed, retrying')
     return (modulus_n, exponent_e), (modulus_n, exponent_d)
 
 

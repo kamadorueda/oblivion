@@ -17,8 +17,8 @@ def test_mask_generation_function(args, result):
 
 @pytest.mark.parametrize(
     "args,result", [
-        ((2,), (2, 3)),
-        ((3,), (5, 7)),
+        ((2,), (2, 3, 5, 7)),
+        ((3,), (5, 7, 11, 13)),
     ])
 def test_generate_prime(args, result):
     """Test functions.generate_prime."""
