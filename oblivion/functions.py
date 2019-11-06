@@ -1,5 +1,6 @@
 # Standard imports
-import os
+import math
+import secrets
 
 # Local imports
 from oblivion.constants import (
@@ -18,7 +19,7 @@ def hash_func(msg: bytes) -> bytes:
 
 def random_bytes(size: int) -> bytes:
     """Return a safe random octet string."""
-    return os.urandom(size)
+    return secrets.token_bytes(size)
 
 
 def bytes_xor(bytes_a: bytes, bytes_b: bytes) -> bytes:
@@ -26,6 +27,38 @@ def bytes_xor(bytes_a: bytes, bytes_b: bytes) -> bytes:
     if len(bytes_a) != len(bytes_b):
         raise ValueError('Expected equal length octet strings')
     return bytes(a ^ b for a, b in zip(bytes_a, bytes_b))
+
+
+def jacobi(numerator: int, denominator: int) -> int:
+    """Compute the Jacobi Symbol."""
+    if denominator <= 0 or denominator & 1 == 0:
+        raise ValueError('Jacobi parameters are out of function domain')
+    j_symbol: int = 1
+    numerator %= denominator
+    while numerator:
+        while numerator & 1 == 0:
+            numerator = numerator // 2
+            if denominator % 8 in (3, 5):
+                j_symbol *= -1
+        numerator, denominator = denominator, numerator
+        if numerator % 4 == denominator % 4 == 3:
+            j_symbol *= -1
+        numerator %= denominator
+    if denominator == 1:
+        return j_symbol
+    return 0
+
+
+def is_prime(number, rounds: int = 32) -> bool:
+    """Primality test via Solovay-Strassen algorithm."""
+    helper: int = (number - 1) // 2
+    for _ in range(rounds):
+        witness: int = 1 + secrets.randbelow(number - 1)
+        if math.gcd(witness, number) != 1:
+            return False
+        if jacobi(witness, number) % number != pow(witness, helper, number):
+            return False
+    return True
 
 
 def mask_generation_function(mgf_seed: bytes, mask_length: int) -> bytes:
