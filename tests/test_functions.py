@@ -13,3 +13,13 @@ from oblivion import functions
 def test_mask_generation_function(args, result):
     """Test functions.mask_generation_function."""
     assert functions.mask_generation_function(*args) == result
+
+
+@pytest.mark.parametrize(
+    "args,result", [
+        ((2,), (2, 3)),
+        ((3,), (5, 7)),
+    ])
+def test_generate_prime(args, result):
+    """Test functions.generate_prime."""
+    assert functions.generate_prime(*args) in result

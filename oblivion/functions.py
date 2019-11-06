@@ -1,11 +1,15 @@
 # Standard imports
 import math
 import secrets
+from typing import Tuple
 
 # Local imports
 from oblivion.constants import (
     HashBase,
     HASH_LENGTH,
+
+    RSAPublicKey,
+    RSAPrivateKey
 )
 from oblivion.primitives import (
     integer_to_octet_string_primitive,
@@ -59,6 +63,57 @@ def is_prime(number, rounds: int = 32) -> bool:
         if jacobi(witness, number) % number != pow(witness, helper, number):
             return False
     return True
+
+
+def generate_prime(bits: int) -> int:
+    """Return a prime number of the specified bits."""
+    while True:
+        prime = secrets.randbits(bits)
+        if (prime).bit_length() < bits:
+            continue
+        prime += (1 - prime & 1)
+        if is_prime(prime):
+            return prime
+
+
+def extended_euclid_gcd(left: int, right: int) -> Tuple[int, int, int]:
+    """Solve left * x + right * y = gcd(left, right) and return r, x, y."""
+    new_x, new_y, new_r = 0, 1, right
+    old_x, old_y, old_r = 1, 0, left
+    while new_r != 0:
+        quotient = old_r // new_r
+        old_r, new_r = new_r, old_r - quotient * new_r
+        old_x, new_x = new_x, old_x - quotient * new_x
+        old_y, new_y = new_y, old_y - quotient * new_y
+    return old_r, old_x, old_y
+
+
+def modulo_multiplicative_inverse(number: int, modulo: int) -> int:
+    """Compute the multiplicative inverse of number under modulo M."""
+    # Assumes number and modulo are co-prime
+    return extended_euclid_gcd(number, modulo)[1] % modulo
+
+
+def get_new_keys(bits: int) -> Tuple[RSAPublicKey, RSAPrivateKey]:
+    """Generate public and private keys with (n, d) of the specified bits."""
+    while True:
+        prime_p = generate_prime(bits // 2)
+        prime_q = generate_prime(bits // 2)
+        modulus_n = prime_p * prime_q
+        if (modulus_n).bit_length() >= bits:
+            break
+
+    totient_n = \
+        (prime_p - 1) * (prime_q - 1) // math.gcd(prime_p - 1, prime_q - 1)
+
+    while True:
+        exponent_d = generate_prime(bits)
+        exponent_e = modulo_multiplicative_inverse(exponent_d, totient_n)
+        if (modulus_n).bit_length() < exponent_e < totient_n \
+                and math.gcd(exponent_e, totient_n) == 1:
+            break
+
+    return (modulus_n, exponent_e), (modulus_n, exponent_d)
 
 
 def mask_generation_function(mgf_seed: bytes, mask_length: int) -> bytes:
