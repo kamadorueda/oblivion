@@ -1,5 +1,9 @@
+# Ephemeral files
 .coverage*
 .mypy_cache
 .tox
 *.egg-info
 __pycache__
+
+# Secrets
+vault.sh

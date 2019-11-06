@@ -1,9 +1,11 @@
 """Setup package."""
 
 import distutils
+from datetime import datetime
 
 distutils.core.setup(
     name='oblivion',
+    version=datetime.utcnow().strftime('%Y.%m.%d.%H.%M.%S'),
     packages=[
         'oblivion',
     ],
