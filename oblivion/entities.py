@@ -11,6 +11,7 @@ from oblivion.constants import (
 
 class RSAKey():
     """Class to represent a RSA Key."""
+    # pylint: disable=too-many-instance-attributes
 
     kind: str = 'generic'
     extension: str = 'json'
@@ -51,7 +52,7 @@ class RSAKey():
         """Save the Key to a location in the file system."""
         with open(path, 'w') as target_handle:
             data: Dict[str, Union[int, str]] = {
-                'type': self.kind,
+                'kind': self.kind,
                 'modulus': self.modulus,
                 'exponent': self.exponent,
                 'modulus_bits': self.modulus_bits,
@@ -59,6 +60,14 @@ class RSAKey():
             }
             target_handle.write(json.dumps(data, indent=4))
             target_handle.write('\n')
+
+    def load_from_file(self, path: str):
+        """Load the Key from a location in the file system."""
+        with open(path, 'r') as target_handle:
+            data: Dict[str, Union[int, str]] = json.loads(target_handle.read())
+            self.kind = str(data['kind'])
+            self.modulus = int(data['modulus'])
+            self.exponent = int(data['exponent'])
 
 
 class RSAPublicKey(RSAKey):

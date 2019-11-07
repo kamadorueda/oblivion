@@ -4,6 +4,7 @@ import argparse
 # Local imports
 from oblivion.cli import (
     gen,
+    encrypt,
 )
 
 
@@ -13,6 +14,7 @@ def cli():
         dest='subparser_name')
 
     gen.put_subparser(subparsers)
+    encrypt.put_subparser(subparsers)
 
     args = parser.parse_args()
 
