@@ -3,10 +3,12 @@ from typing import Tuple
 
 # Local imports
 from oblivion.constants import (
-    RSAPublicKey,
-    RSAPrivateKey,
     RSAMsgRepresentative,
     RSACyphertextRepresentative,
+)
+from oblivion.entities import (
+    RSAPublicKey,
+    RSAPrivateKey,
 )
 
 
@@ -37,17 +39,15 @@ def rsa_encryption_primitive(public_key: RSAPublicKey,
                              message: RSAMsgRepresentative,
                              ) -> RSACyphertextRepresentative:
     # https://tools.ietf.org/html/rfc8017#section-5.1.1
-    key_modulus, public_key_exponent = public_key
-    if not 0 <= message <= key_modulus:
-        raise ValueError(f'not 0 <= {message} <= {key_modulus}')
-    return pow(message, public_key_exponent, key_modulus)
+    if not 0 <= message <= public_key.modulus:
+        raise ValueError(f'not 0 <= {message} <= {public_key.modulus}')
+    return pow(message, public_key.exponent, public_key.modulus)
 
 
 def rsa_decryption_primitive(private_key: RSAPrivateKey,
                              ciphertext: RSACyphertextRepresentative,
                              ) -> RSACyphertextRepresentative:
     # https://tools.ietf.org/html/rfc8017#section-5.1.2
-    key_modulus, private_key_exponent = private_key
-    if not 0 <= ciphertext <= key_modulus:
-        raise ValueError(f'not 0 <= {ciphertext} <= {key_modulus}')
-    return pow(ciphertext, private_key_exponent, key_modulus)
+    if not 0 <= ciphertext <= private_key.modulus:
+        raise ValueError(f'not 0 <= {ciphertext} <= {private_key.modulus}')
+    return pow(ciphertext, private_key.exponent, private_key.modulus)

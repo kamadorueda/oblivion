@@ -1,6 +1,6 @@
 # Local imports
 from oblivion import schemes
-from oblivion.constants import (
+from oblivion.entities import (
     RSAPublicKey,
     RSAPrivateKey,
 )
@@ -17,11 +17,11 @@ def test_rsa_encryption_and_decryption_schemes():
     message = b'test'
     label = b'label'
     ciphertext = schemes.rsa_encryption_scheme_with_oaep_padding(
-        recipient_public_key=RSA_PUBLIC_KEY,
+        public_key=RSA_PUBLIC_KEY,
         message=message,
         label=label)
     message2 = schemes.rsa_decryption_scheme_with_optimal_asymmetric_encryption_padding(
-        recipient_private_key=RSA_PRIVATE_KEY,
+        private_key=RSA_PRIVATE_KEY,
         ciphertext=ciphertext,
         label=label)
     assert message == message2

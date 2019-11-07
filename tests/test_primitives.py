@@ -3,7 +3,7 @@ import pytest
 
 # Local imports
 from oblivion import primitives
-from oblivion.constants import (
+from oblivion.entities import (
     RSAPublicKey,
     RSAPrivateKey,
 )

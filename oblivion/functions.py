@@ -8,10 +8,11 @@ from oblivion.constants import (
     HashBase,
     HASH_LENGTH,
 
+    callback,
+)
+from oblivion.entities import (
     RSAPublicKey,
     RSAPrivateKey,
-
-    callback,
 )
 from oblivion.primitives import (
     integer_to_octet_string_primitive,
@@ -80,7 +81,21 @@ def generate_prime(bits: int) -> int:
 
 
 def generate_special_prime(bits: int, depth: int = 4) -> int:
-    """Return a prime 'p' where 'p-1' has large prime factors."""
+    """
+    Return a prime 'p' where 'p - 1' has large prime factors.
+
+    To guarantee that 'p - 1' has a large prime factor we'll generate a random
+    base prime number 'u', and then find the first prime 'p' in the sequence:
+
+        i * u + 1, where i = 2, 4, 6, ...
+
+    With this, we ensure that the only prime factor of 'p - 1' is 'u', which is
+    large.
+
+    To provide extra security, 'u - 1' will also contain large prime factors,
+    and recursively the base prime used to generate 'u', up to the provided
+    depth level.
+    """
     callback('generating base prime')
 
     counter: int = 0
@@ -117,17 +132,23 @@ def modular_multiplicative_inverse(number: int, modulo: int) -> int:
 
 def rsa_generate_keys(bits: int) -> Tuple[RSAPublicKey, RSAPrivateKey]:
     """Generate public and private keys with (n, d) of the specified bits."""
+    public = RSAPublicKey(modulus=0, exponent=0)
+    private = RSAPrivateKey(modulus=0, exponent=0)
     reduced_totient_divisor_min_bits: int = bits // 2 ** 4
     while True:
         callback('generating prime number: p')
+        # p and q should differ in length by a few digits
+        # both (p - 1) and (q - 1) should contain large prime factors
         prime_p = generate_special_prime(bits // 2 - 1)
         callback('generating prime number: q')
         prime_q = generate_special_prime(bits // 2 + 1)
         callback('computing modulus: n')
-        modulus_n = prime_p * prime_q
+        public.modulus = prime_p * prime_q
+        private.modulus = public.modulus
         callback('computing health check')
+        # gcd(p - 1, q - 1) should be small
         reduced_totient_divisor: int = math.gcd(prime_p - 1, prime_q - 1)
-        if (modulus_n).bit_length() >= bits:
+        if public.modulus_bits >= bits:
             if reduced_totient_divisor_min_bits:
                 if (reduced_totient_divisor.bit_length()
                         < reduced_totient_divisor_min_bits):
@@ -138,17 +159,21 @@ def rsa_generate_keys(bits: int) -> Tuple[RSAPublicKey, RSAPrivateKey]:
     callback('computing reduced_totient of: n')
     reduced_totient = (prime_p - 1) * (prime_q - 1) // reduced_totient_divisor
     while True:
-        callback('computing exponent: d')
-        exponent_d = generate_prime(bits)
-        # It's guaranteed that exponent_d < reduced_totient (FIPS 186-4)
-        callback('computing exponent: e')
-        exponent_e = modular_multiplicative_inverse(exponent_d, reduced_totient)
+        callback('computing private exponent: d')
+        private.exponent = generate_prime(bits)
+        # It's guaranteed that private.exponent < reduced_totient (FIPS 186-4)
+        callback('computing public exponent: e')
+        public.exponent = \
+            modular_multiplicative_inverse(private.exponent, reduced_totient)
         callback('computing health check')
-        if (modulus_n).bit_length() < exponent_e < reduced_totient \
-                and math.gcd(exponent_e, reduced_totient) == 1:
+        # Ensure that any message (except for 0 and 1), will be reduced
+        #   after performing encryption, this is, M ** e (mod n) will
+        #   'wrap around'
+        if public.modulus_bits < public.exponent < reduced_totient \
+                and math.gcd(public.exponent, reduced_totient) == 1:
             break
         callback('health check failed, retrying')
-    return (modulus_n, exponent_e), (modulus_n, exponent_d)
+    return public, private
 
 
 def mask_generation_function(mgf_seed: bytes, mask_length: int) -> bytes:

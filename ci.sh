@@ -10,3 +10,4 @@ set -o verbose \
 
 tox -e lint
 tox -e test
+tox -e publish
