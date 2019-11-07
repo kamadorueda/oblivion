@@ -9,7 +9,7 @@ from oblivion.functions import (
 )
 
 # Constants
-RSA_PUBLIC_KEY, RSA_PRIVATE_KEY = rsa_generate_keys(1024)
+RSA_PUBLIC_KEY, RSA_PRIVATE_KEY = rsa_generate_keys(1280)
 
 
 def test_rsa_encryption_and_decryption_schemes():

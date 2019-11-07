@@ -12,7 +12,7 @@ from oblivion.functions import (
 )
 
 # Constants
-RSA_PUBLIC_KEY, RSA_PRIVATE_KEY = rsa_generate_keys(256)
+RSA_PUBLIC_KEY, RSA_PRIVATE_KEY = rsa_generate_keys(128)
 
 
 

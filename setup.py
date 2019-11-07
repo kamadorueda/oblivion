@@ -8,7 +8,9 @@ distutils.core.setup(
     version=datetime.utcnow().strftime('%Y.%m.%d.%H.%M.%S'),
     packages=[
         'oblivion',
+        'oblivion.cli'
     ],
+
     install_requires=[
     ],
     entry_points={

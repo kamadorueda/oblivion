@@ -80,7 +80,7 @@ def generate_prime(bits: int) -> int:
             return prime
 
 
-def generate_special_prime(bits: int, depth: int = 4) -> int:
+def generate_special_prime(bits: int, depth: int = 2) -> int:
     """
     Return a prime 'p' where 'p - 1' has large prime factors.
 

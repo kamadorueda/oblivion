@@ -22,10 +22,5 @@ HASH_LENGTH = HashBase().digest_size
 
 def callback(msg: str) -> Any:
     """Callback function to notify progress."""
-    return msg
-
-
-def suggested_callback(msg):
-    """Suggested callback function."""
     current_depth: int = len(getouterframes(currentframe()))
     print(textwrap.indent(msg, prefix='-' * current_depth))
