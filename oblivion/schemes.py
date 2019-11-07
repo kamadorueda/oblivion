@@ -62,7 +62,7 @@ def rsa_encryption_scheme_with_oaep_padding(public_key: RSAPublicKey,
     return ciphertext
 
 
-def rsa_decryption_scheme_with_optimal_asymmetric_encryption_padding(
+def rsa_decryption_scheme_with_oaep_padding(
         private_key: RSAPrivateKey,
         ciphertext: RSACyphertext,
         label: RSALabel = b'') -> bytes:

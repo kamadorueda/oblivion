@@ -20,7 +20,7 @@ def test_rsa_encryption_and_decryption_schemes():
         public_key=RSA_PUBLIC_KEY,
         message=message,
         label=label)
-    message2 = schemes.rsa_decryption_scheme_with_optimal_asymmetric_encryption_padding(
+    message2 = schemes.rsa_decryption_scheme_with_oaep_padding(
         private_key=RSA_PRIVATE_KEY,
         ciphertext=ciphertext,
         label=label)

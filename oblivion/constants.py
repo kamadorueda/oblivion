@@ -19,6 +19,7 @@ RSACyphertextRepresentative = int
 # Crypto constants
 HashBase = hashlib.sha3_512
 HASH_LENGTH = HashBase().digest_size
+MINIMUM_MODULUS_BIT_SIZE = 2 * (HASH_LENGTH + 1) * 8
 
 
 def callback(msg: str) -> Any:

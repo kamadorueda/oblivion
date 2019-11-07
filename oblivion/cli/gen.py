@@ -4,6 +4,7 @@ import os
 # Local imports
 from oblivion.constants import (
     callback,
+    MINIMUM_MODULUS_BIT_SIZE,
 )
 from oblivion.functions import (
     rsa_generate_keys,
@@ -31,6 +32,9 @@ def put_subparser(subparsers):
 
 def handler(args):
     callback('generating a new secure RSA key pair')
+    if args.bits < MINIMUM_MODULUS_BIT_SIZE:
+        callback(f'minimum bit size is {MINIMUM_MODULUS_BIT_SIZE}, adjusting')
+        args.bits = MINIMUM_MODULUS_BIT_SIZE
     public_key, private_key = rsa_generate_keys(args.bits)
 
     for key in (public_key, private_key):

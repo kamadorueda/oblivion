@@ -6,20 +6,19 @@ import sys
 # Local imports
 from oblivion.constants import (
     callback,
-    HASH_LENGTH,
 )
 from oblivion.entities import (
-    RSAPublicKey,
+    RSAPrivateKey,
 )
 from oblivion.schemes import (
-    rsa_encryption_scheme_with_oaep_padding,
+    rsa_decryption_scheme_with_oaep_padding,
 )
 
 
 def put_subparser(subparsers):
     parser = subparsers.add_parser(
-        'encrypt',
-        help='Encrypt a file read from standard input (/dev/stdin)',
+        'decrypt',
+        help='Decrypt a file read from standard input (/dev/stdin)',
     )
     parser.add_argument(
         '-k', '--key-name',
@@ -31,7 +30,7 @@ def put_subparser(subparsers):
 
 
 def handler(args):
-    key = RSAPublicKey(modulus=0, exponent=0)
+    key = RSAPrivateKey(modulus=0, exponent=0)
 
     path: str = \
         os.path.abspath(
@@ -46,18 +45,14 @@ def handler(args):
 
     key.load_from_file(path)
 
-    # We can encrypt at much this data octets per round
-    block_size = key.modulus_octets - 2 * (HASH_LENGTH + 1)
-    # Adjust the last octet
-    block_size -= 1
-
-    with io.BufferedReader(sys.stdin.buffer) as buffer:
-        block = buffer.read(block_size)
+    with io.BufferedReader(sys.stdin.buffer, 1024) as buffer, \
+            io.BufferedWriter(sys.stdout.buffer, 1024) as out_buffer:
+        block = bytes.fromhex(buffer.readline().decode()[0:-1])
         while block:
-            encrypted_block = rsa_encryption_scheme_with_oaep_padding(
-                public_key=key,
-                message=block,
+            decrypted_block = rsa_decryption_scheme_with_oaep_padding(
+                private_key=key,
+                ciphertext=block,
                 label=b'oblivion',
             )
-            print(encrypted_block.hex())
-            block = buffer.read(block_size)
+            out_buffer.write(decrypted_block)
+            block = bytes.fromhex(buffer.readline().decode()[0:-1])
