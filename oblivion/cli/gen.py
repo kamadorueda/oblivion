@@ -6,7 +6,7 @@ from oblivion.constants import (
     callback,
     MINIMUM_MODULUS_BIT_SIZE,
 )
-from oblivion.functions import (
+from oblivion.generate import (
     rsa_generate_keys,
 )
 

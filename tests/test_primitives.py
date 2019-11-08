@@ -7,13 +7,6 @@ from oblivion.entities import (
     RSAPublicKey,
     RSAPrivateKey,
 )
-from oblivion.functions import (
-    rsa_generate_keys,
-)
-
-# Constants
-RSA_PUBLIC_KEY, RSA_PRIVATE_KEY = rsa_generate_keys(128)
-
 
 
 @pytest.mark.parametrize(
@@ -34,9 +27,9 @@ def test_integer_to_octet_string_primitive(args, result):
     assert primitives.integer_to_octet_string_primitive(*args) == result
 
 
-def test_rsa_encryption_and_decryption_primitive():
+def test_rsa_encryption_and_decryption_primitive(rsa_keys):
     """Test primitives.rsa_*_primitive."""
     message = 123456789
-    ciphertext = primitives.rsa_encryption_primitive(RSA_PUBLIC_KEY, message)
-    message2 = primitives.rsa_decryption_primitive(RSA_PRIVATE_KEY, ciphertext)
+    ciphertext = primitives.rsa_encryption_primitive(rsa_keys[0], message)
+    message2 = primitives.rsa_decryption_primitive(rsa_keys[1], ciphertext)
     assert message == message2

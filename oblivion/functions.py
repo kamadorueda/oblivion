@@ -10,9 +10,8 @@ from oblivion.constants import (
 
     callback,
 )
-from oblivion.entities import (
-    RSAPublicKey,
-    RSAPrivateKey,
+from oblivion.numeric_constants import (
+    PRIMES,
 )
 from oblivion.primitives import (
     integer_to_octet_string_primitive,
@@ -56,8 +55,18 @@ def jacobi(numerator: int, denominator: int) -> int:
     return 0
 
 
-def is_prime(number, rounds: int = 16) -> bool:
+def _is_probably_prime(number: int) -> bool:
+    """Test number against a known list of primes to early abort the test."""
+    for prime in PRIMES:
+        if number % prime == 0:
+            return False
+    return True
+
+
+def is_prime(number, rounds: int = 8) -> bool:
     """Primality test via Solovay-Strassen algorithm."""
+    if not _is_probably_prime(number):
+        return False
     helper: int = (number - 1) // 2
     for _ in range(rounds):
         witness: int = 1 + secrets.randbelow(number - 1)
@@ -70,7 +79,7 @@ def is_prime(number, rounds: int = 16) -> bool:
 
 def generate_prime(bits: int) -> int:
     """Return a prime number of the specified bits."""
-    callback('generating prime')
+    callback(f'generating prime with {bits} bits')
     while True:
         prime = secrets.randbits(bits + 1)
         prime += (1 - prime & 1)
@@ -80,9 +89,9 @@ def generate_prime(bits: int) -> int:
             return prime
 
 
-def generate_special_prime(bits: int, depth: int = 2) -> int:
+def generate_hard_to_factor_prime(bits: int, depth: int = 3) -> int:
     """
-    Return a prime 'p' where 'p - 1' has large prime factors.
+    Return a prime 'p' where 'p - 1' has a large prime factor.
 
     To guarantee that 'p - 1' has a large prime factor we'll generate a random
     base prime number 'u', and then find the first prime 'p' in the sequence:
@@ -96,15 +105,16 @@ def generate_special_prime(bits: int, depth: int = 2) -> int:
     and recursively the base prime used to generate 'u', up to the provided
     depth level.
     """
-    callback('generating base prime')
-
     counter: int = 0
     if depth > 1:
-        base_prime = generate_special_prime(bits, depth=depth - 1)
+        callback(f'generating a base prime "d{depth}" with {bits} bits '
+                 f'where "d{depth} - 1" has a large prime factor')
+        base_prime = generate_hard_to_factor_prime(bits, depth=depth - 1)
     else:
+        callback(f'generating prime "d{depth}" with {bits} bits')
         base_prime = generate_prime(bits)
 
-    callback('incrementing base prime')
+    callback(f'inflating base prime "d{depth}"')
     while True:
         counter += 2
         prime = counter * base_prime + 1
@@ -128,52 +138,6 @@ def modular_multiplicative_inverse(number: int, modulo: int) -> int:
     """Compute the multiplicative inverse of number under given modulo."""
     # Assumes number and modulo are co-prime
     return extended_euclidian_gcd(number, modulo)[1] % modulo
-
-
-def rsa_generate_keys(bits: int) -> Tuple[RSAPublicKey, RSAPrivateKey]:
-    """Generate public and private keys with (n, d) of the specified bits."""
-    public = RSAPublicKey(modulus=0, exponent=0)
-    private = RSAPrivateKey(modulus=0, exponent=0)
-    reduced_totient_divisor_min_bits: int = bits // 2 ** 4
-    while True:
-        callback('generating prime number: p')
-        # p and q should differ in length by a few digits
-        # both (p - 1) and (q - 1) should contain large prime factors
-        prime_p = generate_special_prime(bits // 2 - 1)
-        callback('generating prime number: q')
-        prime_q = generate_special_prime(bits // 2 + 1)
-        callback('computing modulus: n')
-        public.modulus = prime_p * prime_q
-        private.modulus = public.modulus
-        callback('computing health check')
-        # gcd(p - 1, q - 1) should be small
-        reduced_totient_divisor: int = math.gcd(prime_p - 1, prime_q - 1)
-        if public.modulus_bits >= bits:
-            if reduced_totient_divisor_min_bits:
-                if (reduced_totient_divisor.bit_length()
-                        < reduced_totient_divisor_min_bits):
-                    break
-            else:
-                break
-        callback('health check failed, retrying')
-    callback('computing reduced_totient of: n')
-    reduced_totient = (prime_p - 1) * (prime_q - 1) // reduced_totient_divisor
-    while True:
-        callback('computing private exponent: d')
-        private.exponent = generate_prime(bits)
-        # It's guaranteed that private.exponent < reduced_totient (FIPS 186-4)
-        callback('computing public exponent: e')
-        public.exponent = \
-            modular_multiplicative_inverse(private.exponent, reduced_totient)
-        callback('computing health check')
-        # Ensure that any message (except for 0 and 1), will be reduced
-        #   after performing encryption, this is, M ** e (mod n) will
-        #   'wrap around'
-        if public.modulus_bits < public.exponent < reduced_totient \
-                and math.gcd(public.exponent, reduced_totient) == 1:
-            break
-        callback('health check failed, retrying')
-    return public, private
 
 
 def mask_generation_function(mgf_seed: bytes, mask_length: int) -> bytes:
