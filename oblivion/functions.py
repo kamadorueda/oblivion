@@ -80,16 +80,16 @@ def is_prime(number, rounds: int = 8) -> bool:
 def generate_prime(bits: int) -> int:
     """Return a prime number of the specified bits."""
     callback(f'generating prime with {bits} bits')
+    mask: int = (1 << bits - 1) | 1
     while True:
-        prime = secrets.randbits(bits + 1)
-        prime += (1 - prime & 1)
-        if (prime).bit_length() < bits:
+        prime = secrets.randbits(bits) | mask
+        if prime.bit_length() < bits:
             continue
         if is_prime(prime):
             return prime
 
 
-def generate_hard_to_factor_prime(bits: int, depth: int = 3) -> int:
+def generate_hard_to_factor_prime(bits: int, depth: int = 2) -> int:
     """
     Return a prime 'p' where 'p - 1' has a large prime factor.
 
@@ -106,7 +106,7 @@ def generate_hard_to_factor_prime(bits: int, depth: int = 3) -> int:
     depth level.
     """
     counter: int = 0
-    if depth > 1:
+    if depth > 0:
         callback(f'generating a base prime "d{depth}" with {bits} bits '
                  f'where "d{depth} - 1" has a large prime factor')
         base_prime = generate_hard_to_factor_prime(bits, depth=depth - 1)

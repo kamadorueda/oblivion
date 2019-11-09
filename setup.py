@@ -9,7 +9,7 @@ def get_minor_version() -> int:
     utc_now = \
         datetime.utcnow()
     utc_beginning_of_month = \
-        datetime.utcnow().replace(day=1, minute=0, second=0)
+        datetime.utcnow().replace(day=1, hour=0, minute=0, second=0)
     return int((utc_now - utc_beginning_of_month).total_seconds())
 
 
